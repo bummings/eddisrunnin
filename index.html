@@ -39,7 +39,8 @@
         }
         .controls {
             width: 80px;
-            background: var(--bg-controls);
+            /* background: var(--bg-controls); */
+            background-color: salmon;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -51,6 +52,27 @@
             cursor: pointer;
             user-select: none;
         }
+        .grid-box {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin: 1px;
+            border: 2px solid var(--text);
+            background-color: transparent;
+            border-radius: 2px;
+        }
+
+        .grid-box.filled {
+            background-color: var(--text);
+        }
+
+        .control-btn.active .grid-box {
+            background-color: var(--text);
+        }
+
+        .control-btn:not(.active) .grid-box {
+            background-color: transparent;
+        }
         .gallery {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -59,6 +81,12 @@
         }
         .gallery.two-column {
             grid-template-columns: repeat(2, 1fr);
+        }
+        .gallery.three-column {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .gallery.one-column {
+            grid-template-columns: 100%;
         }
         .gallery-item {
             opacity: 0;
@@ -104,6 +132,17 @@
             box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6);
             transform: scale(0.9);
             transition: transform 0.4s ease;
+            animation: fadeZoom 0.3s ease-out;
+        }
+        @keyframes fadeZoom {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
         .overlay.active img {
             transform: scale(1);
@@ -134,6 +173,10 @@
             font-size: 16px;
             transition: background 0.3s ease, color 0.3s ease;
         }
+        .gallery.one-column .gallery-item img {
+            height: 100vh;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
@@ -141,8 +184,19 @@
         <div class="gallery" id="gallery"></div>
     </div>
     <div class="controls">
-        <div class="control-btn" id="twoCol" title="2-column">🔳🔳</div>
-        <div class="control-btn" id="fourCol" title="4-column">🔳🔳🔳🔳</div>
+        <div class="control-btn" id="oneCol" title="1-column">
+            <span class="grid-box"></span>
+        </div>
+        <div class="control-btn" id="twoCol" title="2-column">
+            <span class="grid-box"></span><span class="grid-box"></span>
+        </div>
+        <div class="control-btn" id="threeCol" title="3-column">
+            <span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span>
+        </div>
+        <div class="control-btn" id="fourCol" title="4-column">
+            <span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span>
+        </div>
+        <div class="control-btn" id="shuffleToggle" title="Shuffle/Reset">🎾</div>
     </div>
     <div class="overlay" id="overlay">
         <span class="close-btn" id="closeBtn">&times;</span>
@@ -151,28 +205,81 @@
     <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">🌓</button>
 
     <script>
-        const images = Array.from({ length: 417 }, (_, i) => `../images/image${i + 1}.webp`);
+        const originalImages = Array.from({ length: 417 }, (_, i) => ({
+            id: i + 1,
+            src: `../images/image${i + 1}.webp`
+        }));
+        let currentImages = [...originalImages];
+
         const gallery = document.getElementById("gallery");
         const twoCol = document.getElementById("twoCol");
+        const threeCol = document.getElementById("threeCol");
         const fourCol = document.getElementById("fourCol");
+        const oneCol = document.getElementById("oneCol");
         const overlay = document.getElementById("overlay");
         const overlayImg = document.getElementById("overlayImg");
         const closeBtn = document.getElementById("closeBtn");
         const themeToggle = document.getElementById("themeToggle");
 
-        images.forEach(img => {
-            const div = document.createElement("div");
-            div.className = "gallery-item visible";
-            const image = document.createElement("img");
-            image.src = img;
-            div.appendChild(image);
-            div.addEventListener("click", () => {
-                overlayImg.src = img;
-                overlay.classList.remove("closing");
-                overlay.classList.add("active");
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
             });
-            gallery.appendChild(div);
+        }, {
+            threshold: 0.2
         });
+
+        let currentIndex = null;
+
+        const openOverlay = (index) => {
+            currentIndex = index;
+            overlayImg.src = currentImages[index].src;
+            overlay.classList.remove("closing");
+            overlay.classList.add("active");
+        };
+
+        const showNextImage = () => {
+            if (currentIndex !== null) {
+                currentIndex = (currentIndex + 1) % currentImages.length;
+                overlayImg.src = currentImages[currentIndex].src;
+            }
+        };
+
+        const showPrevImage = () => {
+            if (currentIndex !== null) {
+                currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+                overlayImg.src = currentImages[currentIndex].src;
+            }
+        };
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeOverlay();
+            else if (e.key === "ArrowRight") showNextImage();
+            else if (e.key === "ArrowLeft") showPrevImage();
+        });
+
+        const renderGallery = (imageArray) => {
+            gallery.innerHTML = "";
+            imageArray.forEach(({ id, src }, index) => {
+                const div = document.createElement("div");
+                div.className = "gallery-item";
+                const image = document.createElement("img");
+                image.src = src;
+                image.dataset.id = id;
+                div.appendChild(image);
+                div.addEventListener("click", () => {
+                    openOverlay(index);
+                });
+                gallery.appendChild(div);
+                observer.observe(div);
+            });
+        };
+
+        renderGallery(currentImages);
 
         const closeOverlay = () => {
             overlay.classList.remove("active");
@@ -187,27 +294,64 @@
         overlay.addEventListener("click", (e) => {
             if (e.target === overlay || e.target === overlayImg) closeOverlay();
         });
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") closeOverlay();
-        });
 
         const triggerGridTransition = () => {
             const items = document.querySelectorAll('.gallery-item');
             items.forEach(item => item.classList.remove('visible'));
             setTimeout(() => items.forEach(item => item.classList.add('visible')), 50);
+        }
+        ;
+        const layoutButtons = [oneCol, twoCol, threeCol, fourCol];
+        const setActiveLayoutButton = (activeBtn) => {
+            layoutButtons.forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
         };
 
-        twoCol.addEventListener("click", () => {
-            gallery.classList.add("two-column");
+        oneCol.addEventListener("click", () => {
+            gallery.classList.remove("two-column", "three-column");
+            gallery.classList.add("one-column");
+            setActiveLayoutButton(oneCol);
             triggerGridTransition();
         });
+
+        twoCol.addEventListener("click", () => {
+            gallery.classList.remove("three-column", "one-column");
+            gallery.classList.add("two-column");
+            setActiveLayoutButton(twoCol);
+            triggerGridTransition();
+        });
+        
+        threeCol.addEventListener("click", () => {
+            gallery.classList.remove("two-column", "one-column");
+            gallery.classList.add("three-column");
+            setActiveLayoutButton(threeCol);
+            triggerGridTransition();
+        });
+        
         fourCol.addEventListener("click", () => {
-            gallery.classList.remove("two-column");
+            gallery.classList.remove("two-column", "three-column", "one-column");
+            setActiveLayoutButton(fourCol);
             triggerGridTransition();
         });
 
         themeToggle.addEventListener("click", () => {
             document.body.classList.toggle("dark");
+        });
+
+        const shuffleToggle = document.getElementById("shuffleToggle");
+        let isShuffled = false;
+
+        shuffleToggle.addEventListener("click", () => {
+            if (!isShuffled) {
+                currentImages = [...originalImages].sort(() => Math.random() - 0.5);
+                shuffleToggle.textContent = "🎲";
+            } else {
+                currentImages = [...originalImages];
+                shuffleToggle.textContent = "🌀";
+            }
+            isShuffled = !isShuffled;
+            renderGallery(currentImages);
+            triggerGridTransition();
         });
     </script>
 </body>
