@@ -7,7 +7,8 @@ const loadMoreTrigger = document.getElementById("loadMoreTrigger");
 // originalImages = [{ id: 1, src: './images/folder1/0001.jpg' }, ...];
 const originalImages = Array.from({ length: 1444 }, (_, i) => ({
     id: i + 1,
-    src: `./images/${String(i + 1).padStart(4, '0')}.webp`
+    // src: `./images/${String(i + 1).padStart(4, '0')}.webp`
+    src: `https://eddisrunnin.hello-361.workers.dev/${String(i + 1).padStart(4, '0')}.webp`
 }));
 let currentImages = [...originalImages];
 
@@ -86,8 +87,6 @@ const renderGallery = (imageArray) => {
     });
 };
 
-renderGallery(currentImages);
-
 const closeOverlay = () => {
     overlay.classList.remove("active");
     overlay.classList.add("closing");
@@ -155,7 +154,6 @@ shuffleToggle.addEventListener("click", () => {
 normalToggle.addEventListener("click", () => {
     currentImages = [...originalImages];
     isShuffled = false;
-    renderGallery(currentImages);
     triggerGridTransition();
 });
 
@@ -212,4 +210,13 @@ renderChunk();
 sentinelObserver.observe(loadMoreTrigger);
 };
 
+const startNormalView = () => {
+    gallery.innerHTML = "";
+    currentIndex = 0;
+    shuffledImages = [...originalImages]; // use shared buffer
+    renderChunk();
+    sentinelObserver.observe(loadMoreTrigger);
+};
+
+startNormalView();
 setActiveLayoutButton(twoCol);
