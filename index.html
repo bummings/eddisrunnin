@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
     <title>Responsive Image Gallery</title>
     <style>
         :root {
@@ -21,7 +22,7 @@
             margin: 0;
             background: var(--bg-main);
             color: var(--text);
-            font-family: sans-serif;
+            font-family: Silkscreen;
             display: flex;
             flex-direction: row;
             height: 100vh;
@@ -38,28 +39,36 @@
             scroll-snap-type: y mandatory;
         }
         .controls {
-            width: 80px;
-            /* background: var(--bg-controls); */
+            width: 160px;
             background-color: salmon;
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            padding: 10px;
-            gap: 10px;
+            padding: 30px 20px;
+            gap: 20px;
+            font-family: Silkscreen;
+        }
+        .controls div {
+            margin-bottom: 10px; 
+            font-size: 14px; 
+            align-self: flex-end;
         }
         .control-btn {
-            font-size: 20px;
+            font-size: 24px;
             cursor: pointer;
             user-select: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: flex-end;
         }
         .grid-box {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            margin: 1px;
+            width: 18px;
+            height: 18px;
             border: 2px solid var(--text);
             background-color: transparent;
             border-radius: 2px;
+            display: inline-block;
         }
 
         .grid-box.filled {
@@ -88,23 +97,50 @@
         .gallery.one-column {
             grid-template-columns: 100%;
         }
+        .gallery.huge-grid {
+            grid-template-columns: repeat(12, 1fr);
+            gap: 8px;
+        }
         .gallery-item {
             opacity: 0;
             transform: scale(0.95);
             transition: opacity 0.4s ease, transform 0.4s ease;
             scroll-snap-align: start;
             cursor: pointer;
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
         .gallery-item.visible {
             opacity: 1;
             transform: scale(1);
         }
         .gallery-item img {
-            width: 100%;
+            max-height: 90vh;
+            max-width: 100%;
+            width: auto;
             height: auto;
+            object-fit: contain;
             display: block;
             border-radius: 4px;
         }
+.gallery-item .photo-id {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #000;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    z-index: 2;
+    pointer-events: none;
+    max-width: calc(100% - 24px);
+    box-sizing: border-box;
+}
         .overlay {
             position: fixed;
             top: 0;
@@ -126,8 +162,9 @@
             visibility: visible;
         }
         .overlay img {
-            max-width: 98vw;
-            max-height: 98vh;
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
             border-radius: 6px;
             box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6);
             transform: scale(0.9);
@@ -164,30 +201,56 @@
             bottom: 20px;
             right: 20px;
             z-index: 1002;
-            background: var(--bg-controls);
+            background: transparent;
             color: var(--text);
-            border: 1px solid #ccc;
+            border: 2px solid var(--text);
             padding: 10px;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
-            transition: background 0.3s ease, color 0.3s ease;
+            transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
         }
         .gallery.one-column .gallery-item img {
             height: 100vh;
             object-fit: contain;
         }
+
+        .grid-cell {
+            fill: transparent;
+            stroke: var(--text);
+            stroke-width: 2;
+        }
+
+        .control-btn.active .grid-cell {
+            fill: var(--text);
+        }
+
+        body.dark .controls {
+            background-color: salmon;
+            color: #000;
+        }
+
+        body.dark .grid-box,
+        body.dark .grid-cell,
+        body.dark .control-btn,
+        body.dark .controls div,
+        body.dark .theme-toggle {
+            color: #000;
+            border-color: #000;
+        }
     </style>
 </head>
 <body>
     <div class="main">
-        <div class="gallery" id="gallery"></div>
+        <div class="gallery two-column" id="gallery"></div>
+        <div id="loadMoreTrigger"></div>
     </div>
     <div class="controls">
+        <div>eddisrunnin</div>
         <div class="control-btn" id="oneCol" title="1-column">
             <span class="grid-box"></span>
         </div>
-        <div class="control-btn" id="twoCol" title="2-column">
+        <div class="control-btn active" id="twoCol" title="2-column">
             <span class="grid-box"></span><span class="grid-box"></span>
         </div>
         <div class="control-btn" id="threeCol" title="3-column">
@@ -196,7 +259,12 @@
         <div class="control-btn" id="fourCol" title="4-column">
             <span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span>
         </div>
-        <div class="control-btn" id="shuffleToggle" title="Shuffle/Reset">🎾</div>
+        <div class="control-btn" id="hugeGrid" title="Huge Grid">
+            <span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span>
+            <span class="grid-box"></span><span class="grid-box"></span><span class="grid-box"></span>
+        </div>
+        <div class="control-btn" id="normalToggle" title="Normal Order">🍌</div>
+        <div class="control-btn" id="shuffleToggle" title="Random Order">🎲</div>
     </div>
     <div class="overlay" id="overlay">
         <span class="close-btn" id="closeBtn">&times;</span>
@@ -205,9 +273,17 @@
     <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">🌓</button>
 
     <script>
-        const originalImages = Array.from({ length: 417 }, (_, i) => ({
+
+        // chunk randomize
+        const CHUNK_SIZE = 100;
+        let shuffledImages = [];
+        const loadMoreTrigger = document.getElementById("loadMoreTrigger");
+
+        // NOTE: Browsers can't read file directories. This must be done server-side (e.g. Node.js, PHP) to generate a JSON array of paths like:
+        // originalImages = [{ id: 1, src: './images/folder1/0001.jpg' }, ...];
+        const originalImages = Array.from({ length: 1444 }, (_, i) => ({
             id: i + 1,
-            src: `../images/image${i + 1}.webp`
+            src: `./images/${String(i + 1).padStart(4, '0')}.webp`
         }));
         let currentImages = [...originalImages];
 
@@ -216,6 +292,7 @@
         const threeCol = document.getElementById("threeCol");
         const fourCol = document.getElementById("fourCol");
         const oneCol = document.getElementById("oneCol");
+        const hugeGrid = document.getElementById("hugeGrid");
         const overlay = document.getElementById("overlay");
         const overlayImg = document.getElementById("overlayImg");
         const closeBtn = document.getElementById("closeBtn");
@@ -233,7 +310,7 @@
             threshold: 0.2
         });
 
-        let currentIndex = null;
+        let currentIndex = 0;
 
         const openOverlay = (index) => {
             currentIndex = index;
@@ -263,6 +340,7 @@
         });
 
         const renderGallery = (imageArray) => {
+            // Note: originalImages array must be pre-generated server-side
             gallery.innerHTML = "";
             imageArray.forEach(({ id, src }, index) => {
                 const div = document.createElement("div");
@@ -271,6 +349,12 @@
                 image.src = src;
                 image.dataset.id = id;
                 div.appendChild(image);
+                
+                const idLabel = document.createElement("div");
+                idLabel.className = "photo-id";
+                idLabel.textContent = id;
+                div.appendChild(idLabel);
+                
                 div.addEventListener("click", () => {
                     openOverlay(index);
                 });
@@ -301,36 +385,61 @@
             setTimeout(() => items.forEach(item => item.classList.add('visible')), 50);
         }
         ;
-        const layoutButtons = [oneCol, twoCol, threeCol, fourCol];
+        const layoutButtons = [oneCol, twoCol, threeCol, fourCol, hugeGrid];
         const setActiveLayoutButton = (activeBtn) => {
             layoutButtons.forEach(btn => btn.classList.remove('active'));
             activeBtn.classList.add('active');
         };
 
         oneCol.addEventListener("click", () => {
-            gallery.classList.remove("two-column", "three-column");
+            gallery.classList.remove("two-column", "three-column", "four-column", "huge-grid");
             gallery.classList.add("one-column");
             setActiveLayoutButton(oneCol);
             triggerGridTransition();
         });
 
         twoCol.addEventListener("click", () => {
-            gallery.classList.remove("three-column", "one-column");
+            gallery.classList.remove("three-column", "four-column", "one-column", "huge-grid");
             gallery.classList.add("two-column");
             setActiveLayoutButton(twoCol);
             triggerGridTransition();
         });
         
         threeCol.addEventListener("click", () => {
-            gallery.classList.remove("two-column", "one-column");
+            gallery.classList.remove("two-column", "four-column", "one-column", "huge-grid");
             gallery.classList.add("three-column");
             setActiveLayoutButton(threeCol);
             triggerGridTransition();
         });
         
         fourCol.addEventListener("click", () => {
-            gallery.classList.remove("two-column", "three-column", "one-column");
+            gallery.classList.remove("two-column", "three-column", "one-column", "huge-grid");
+            gallery.classList.add("four-column");
             setActiveLayoutButton(fourCol);
+            triggerGridTransition();
+        });
+
+        hugeGrid.addEventListener("click", () => {
+            gallery.classList.remove("one-column", "two-column", "three-column", "four-column");
+            gallery.classList.add("huge-grid");
+            setActiveLayoutButton(hugeGrid);
+            triggerGridTransition();
+        });
+
+        const shuffleToggle = document.getElementById("shuffleToggle");
+        const normalToggle = document.getElementById("normalToggle");
+        let isShuffled = false;
+
+        shuffleToggle.addEventListener("click", () => {
+            isShuffled = true;
+            startShuffledView();
+            triggerGridTransition();
+        });
+
+        normalToggle.addEventListener("click", () => {
+            currentImages = [...originalImages];
+            isShuffled = false;
+            renderGallery(currentImages);
             triggerGridTransition();
         });
 
@@ -338,21 +447,57 @@
             document.body.classList.toggle("dark");
         });
 
-        const shuffleToggle = document.getElementById("shuffleToggle");
-        let isShuffled = false;
-
-        shuffleToggle.addEventListener("click", () => {
-            if (!isShuffled) {
-                currentImages = [...originalImages].sort(() => Math.random() - 0.5);
-                shuffleToggle.textContent = "🎲";
-            } else {
-                currentImages = [...originalImages];
-                shuffleToggle.textContent = "🌀";
+        const renderChunk = () => {
+            if (currentIndex >= shuffledImages.length) {
+                sentinelObserver.disconnect();
+                return;
             }
-            isShuffled = !isShuffled;
-            renderGallery(currentImages);
-            triggerGridTransition();
+            const chunk = shuffledImages.slice(currentIndex, currentIndex + CHUNK_SIZE);
+    chunk.forEach(({ id, src }, index) => {
+        const div = document.createElement("div");
+        div.className = "gallery-item";
+        const image = document.createElement("img");
+        image.src = src;
+        image.dataset.id = id;
+        image.loading = "lazy";
+
+        const idLabel = document.createElement("div");
+        idLabel.className = "photo-id";
+        idLabel.textContent = id;
+
+        div.appendChild(image);
+        div.appendChild(idLabel);
+
+        div.addEventListener("click", () => {
+            const absoluteIndex = currentImages.findIndex(img => img.src === src);
+            openOverlay(absoluteIndex);
         });
+        gallery.appendChild(div);
+        observer.observe(div);
+    });
+
+    currentIndex += CHUNK_SIZE;
+};
+
+const sentinelObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+        renderChunk();
+    }
+}, {
+    rootMargin: "300px",
+    threshold: 0.1
+});
+
+const startShuffledView = () => {
+    gallery.innerHTML = "";
+    currentIndex = 0;
+    shuffledImages = [...originalImages].sort(() => Math.random() - 0.5);
+    renderChunk();
+    sentinelObserver.observe(loadMoreTrigger);
+};
+
+        setActiveLayoutButton(twoCol);
     </script>
+    
 </body>
 </html>
