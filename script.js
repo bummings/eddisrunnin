@@ -1,4 +1,3 @@
-// chunk randomize
 const CHUNK_SIZE = 100;
 let shuffledImages = [];
 const loadMoreTrigger = document.getElementById("loadMoreTrigger");
@@ -7,7 +6,6 @@ const loadMoreTrigger = document.getElementById("loadMoreTrigger");
 // originalImages = [{ id: 1, src: './images/folder1/0001.jpg' }, ...];
 const originalImages = Array.from({ length: 1444 }, (_, i) => ({
     id: i + 1,
-    // src: `./images/${String(i + 1).padStart(4, '0')}.webp`
     src: `https://eddisrunnin.hello-361.workers.dev/${String(i + 1).padStart(4, '0')}.webp`
 }));
 let currentImages = [...originalImages];
@@ -64,7 +62,6 @@ document.addEventListener("keydown", (e) => {
 });
 
 const renderGallery = (imageArray) => {
-    // Note: originalImages array must be pre-generated server-side
     gallery.innerHTML = "";
     imageArray.forEach(({ id, src }, index) => {
         const div = document.createElement("div");
@@ -80,7 +77,8 @@ const renderGallery = (imageArray) => {
         div.appendChild(idLabel);
         
         div.addEventListener("click", () => {
-            openOverlay(index);
+            const absoluteIndex = currentImages.findIndex(img => img.id === id);
+            openOverlay(absoluteIndex);
         });
         gallery.appendChild(div);
         observer.observe(div);
@@ -167,53 +165,55 @@ const renderChunk = () => {
         return;
     }
     const chunk = shuffledImages.slice(currentIndex, currentIndex + CHUNK_SIZE);
-chunk.forEach(({ id, src }, index) => {
-const div = document.createElement("div");
-div.className = "gallery-item";
-const image = document.createElement("img");
-image.src = src;
-image.dataset.id = id;
-image.loading = "lazy";
+    chunk.forEach(({ id, src }, index) => {
+        const div = document.createElement("div");
+        div.className = "gallery-item";
+        const image = document.createElement("img");
+        image.src = src;
+        image.dataset.id = id;
+        image.loading = "lazy";
 
-const idLabel = document.createElement("div");
-idLabel.className = "photo-id";
-idLabel.textContent = id;
+        const idLabel = document.createElement("div");
+        idLabel.className = "photo-id";
+        idLabel.textContent = id;
 
-div.appendChild(image);
-div.appendChild(idLabel);
+        div.appendChild(image);
+        div.appendChild(idLabel);
 
-div.addEventListener("click", () => {
-    const absoluteIndex = currentImages.findIndex(img => img.src === src);
-    openOverlay(absoluteIndex);
-});
-gallery.appendChild(div);
-observer.observe(div);
-});
+        div.addEventListener("click", () => {
+            const absoluteIndex = currentImages.findIndex(img => img.id === id);
+            openOverlay(absoluteIndex);
+        });
+        gallery.appendChild(div);
+        observer.observe(div);
+    });
 
-currentIndex += CHUNK_SIZE;
+    currentIndex += CHUNK_SIZE;
 };
 
 const sentinelObserver = new IntersectionObserver((entries) => {
-if (entries[0].isIntersecting) {
-renderChunk();
-}
+    if (entries[0].isIntersecting) {
+        renderChunk();
+    }
 }, {
-rootMargin: "300px",
-threshold: 0.1
+    rootMargin: "300px",
+    threshold: 0.1
 });
 
 const startShuffledView = () => {
-gallery.innerHTML = "";
-currentIndex = 0;
-shuffledImages = [...originalImages].sort(() => Math.random() - 0.5);
-renderChunk();
-sentinelObserver.observe(loadMoreTrigger);
+    gallery.innerHTML = "";
+    currentIndex = 0;
+    shuffledImages = [...originalImages].sort(() => Math.random() - 0.5);
+    currentImages = [...shuffledImages];
+    renderChunk();
+    sentinelObserver.observe(loadMoreTrigger);
 };
 
 const startNormalView = () => {
     gallery.innerHTML = "";
     currentIndex = 0;
     shuffledImages = [...originalImages]; // use shared buffer
+    currentImages = [...shuffledImages];
     renderChunk();
     sentinelObserver.observe(loadMoreTrigger);
 };

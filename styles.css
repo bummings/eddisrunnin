@@ -1,4 +1,4 @@
-        :root {
+:root {
             --bg-main: #E9E4DC;
             --bg-controls: #eee;
             --text: #000;
@@ -76,8 +76,6 @@
         }
         .gallery {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 40px;
             transition: all 0.4s ease-in-out;
         }
         .gallery.two-column {
@@ -88,6 +86,9 @@
         }
         .gallery.one-column {
             grid-template-columns: 100%;
+        }
+        .gallery.four-column {
+            grid-template-columns: repeat(4, 1fr);
         }
         .gallery.huge-grid {
             grid-template-columns: repeat(12, 1fr);
@@ -236,3 +237,63 @@
             line-height: 1.1 !important;
             padding: 0 !important;
         }
+
+
+
+/* Mobile-first: base styles already apply to phones */
+
+/* Tablets (landscape phones + small tablets) */
+@media (min-width: 600px) {
+    .gallery {
+      /* Removed grid-template-columns definition */
+    }
+  
+    .controls {
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-start;
+      width: 160px;
+      padding: 20px;
+      gap: 20px;
+    }
+  
+    .main {
+      padding: 30px;
+    }
+  }
+  
+  /* Small desktops */
+  @media (min-width: 900px) {
+    .gallery {
+      /* Removed grid-template-columns definition */
+      gap: 30px;
+    }
+  
+    .main {
+      padding: 40px 60px;
+    }
+  }
+  
+  /* Widescreen / ultrawide displays */
+  @media (min-width: 1200px) {
+    .gallery.huge-grid {
+      grid-template-columns: repeat(12, 1fr);
+      gap: 8px;
+    }
+  
+    .gallery {
+      /* Removed grid-template-columns definition */
+      gap: 40px;
+    }
+  }
+  
+  /* Extra-wide / 4K displays */
+  @media (min-width: 1600px) {
+    .main {
+      padding: 60px 80px;
+    }
+  
+    .gallery {
+      /* Removed grid-template-columns definition */
+    }
+  }
