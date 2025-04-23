@@ -26,14 +26,14 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            padding: 40px 60px;
+            padding: 12vh 40px;
             background: var(--bg-main);
-            scroll-padding-top: 15vh;
-            scroll-padding-bottom: 15vh;
+            scroll-padding-top: 10vh;
+            scroll-padding-bottom: 10vh;
             scroll-snap-type: y mandatory;
         }
         .controls {
-            width: 160px;
+            width: 100px;
             background-color: salmon;
             display: flex;
             flex-direction: column;
@@ -69,6 +69,15 @@
             background-color: var(--text);
         }
 
+        .control-btn .grid-box {
+            background-color: transparent;
+        }
+
+        .control-btn.active .grid-box {
+            animation: fillBox 0.4s ease forwards;
+            transform-origin: bottom;
+        }
+
         .control-btn.active .grid-box {
             background-color: var(--text);
         }
@@ -99,10 +108,9 @@
         .gallery-item {
             opacity: 0;
             transform: scale(0.95);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.25s ease, transform 0.25s ease;
             scroll-snap-align: center;
             cursor: pointer;
-            max-height: 90vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -112,12 +120,15 @@
             opacity: 1;
             transform: scale(1);
         }
+        .gallery.two-column .gallery-item {
+            height: 78vh;
+        }
+
         .gallery-item img {
             max-height: 90vh;
-            max-width: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             display: block;
             border-radius: 4px;
         }
@@ -240,7 +251,18 @@
             padding: 0 !important;
         }
 
-
+        @keyframes fillBox {
+          0% {
+            background-color: transparent;
+            transform: scaleY(0);
+            transform-origin: bottom;
+          }
+          100% {
+            background-color: var(--text);
+            transform: scaleY(1);
+            transform-origin: bottom;
+          }
+        }
 
 /* Mobile-first: base styles already apply to phones */
 
@@ -254,13 +276,13 @@
       flex-direction: column;
       align-items: flex-end;
       justify-content: flex-start;
-      width: 160px;
+      width: 100px;
       padding: 20px;
       gap: 20px;
     }
   
     .main {
-      padding: 30px;
+      padding: 12vh 40px;
     }
   }
   
@@ -272,7 +294,7 @@
     }
   
     .main {
-      padding: 40px 60px;
+      padding: 12vh 40px;
     }
   }
   
@@ -292,7 +314,7 @@
   /* Extra-wide / 4K displays */
   @media (min-width: 1600px) {
     .main {
-      padding: 60px 80px;
+      padding: 12vh 40px;
     }
   
     .gallery {

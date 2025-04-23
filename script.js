@@ -2,11 +2,19 @@ const CHUNK_SIZE = 100;
 let shuffledImages = [];
 const loadMoreTrigger = document.getElementById("loadMoreTrigger");
 
+const useProdImages = false; // Set this to true for production
+// TODO: add a "staging" h1 to sidemenu to distinguish when workin locally
+
+const getImageSrc = (i) =>
+  useProdImages
+    ? `https://eddisrunnin.hello-361.workers.dev/${String(i + 1).padStart(4, '0')}.webp`
+    : `./images/${String(i + 1).padStart(4, '0')}.webp`;
+
 // NOTE: Browsers can't read file directories. This must be done server-side (e.g. Node.js, PHP) to generate a JSON array of paths like:
 // originalImages = [{ id: 1, src: './images/folder1/0001.jpg' }, ...];
 const originalImages = Array.from({ length: 1444 }, (_, i) => ({
     id: i + 1,
-    src: `https://eddisrunnin.hello-361.workers.dev/${String(i + 1).padStart(4, '0')}.webp`
+    src: getImageSrc(i)
 }));
 let currentImages = [...originalImages];
 
