@@ -1,6 +1,6 @@
 :root {
             --bg-main: #E9E4DC;
-            --bg-controls: #eee;
+            --bg-controls: #E8E4DD;
             --text: #000;
             --overlay-bg: rgba(0, 0, 0, 0.85);
         }
@@ -34,7 +34,7 @@
         }
         .controls {
             width: 100px;
-            background-color: salmon;
+            background-color: var(--bg-controls);
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -108,14 +108,20 @@
         .gallery-item {
             opacity: 0;
             transform: scale(0.95);
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            transition: opacity 0.25s ease, transform 0.25s ease, box-shadow 0.2s ease;
             scroll-snap-align: center;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
+
+.gallery-item:hover {
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
         .gallery-item.visible {
             opacity: 1;
             transform: scale(1);
@@ -231,10 +237,10 @@
             fill: var(--text);
         }
 
-        body.dark .controls {
-            background-color: salmon;
-            color: #000;
-        }
+body.dark .controls {
+    background-color: #E8E4DD;
+    color: #000;
+}
 
         body.dark .grid-box,
         body.dark .grid-cell,
@@ -321,3 +327,9 @@
       /* Removed grid-template-columns definition */
     }
   }
+/* Staging/Production indicator */
+.staging-indicator {
+    font-size: 1px;
+    color: var(--bg-controls); /* Match background color */
+    user-select: text;
+}

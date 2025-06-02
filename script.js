@@ -2,8 +2,22 @@ const CHUNK_SIZE = 100;
 let shuffledImages = [];
 const loadMoreTrigger = document.getElementById("loadMoreTrigger");
 
-const useProdImages = false; // Set this to true for production
+const useProdImages = true; // Set this to true for production
 // TODO: add a "staging" h1 to sidemenu to distinguish when workin locally
+
+if (!useProdImages) {
+    const stagingTag = document.createElement("div");
+    stagingTag.textContent = "S";
+    stagingTag.style.fontSize = "12px";
+    stagingTag.style.opacity = "0.6";
+    stagingTag.style.marginTop = "auto";
+    stagingTag.style.alignSelf = "flex-end";
+    stagingTag.style.fontFamily = "monospace";
+    stagingTag.style.letterSpacing = "1px";
+    const controls = document.querySelector('.controls');
+    controls.appendChild(stagingTag);
+    controls.style.background = 'salmon';
+}
 
 const getImageSrc = (i) =>
   useProdImages
@@ -39,6 +53,40 @@ const observer = new IntersectionObserver(entries => {
 }, {
     threshold: 0.2
 });
+
+const drainObserver = new IntersectionObserver(entries => {
+    let topMostVisible = null;
+    let topOffset = Infinity;
+
+    entries.forEach(entry => {
+        if (entry.isIntersecting && entry.boundingClientRect.top < topOffset) {
+            topOffset = entry.boundingClientRect.top;
+            topMostVisible = entry.target;
+        }
+    });
+
+    if (topMostVisible) {
+        // Calculate index of visible element in the gallery
+        const index = Array.prototype.indexOf.call(gallery.children, topMostVisible);
+        const progress = Math.min(index / originalImages.length, 1);
+        controls.style.background = `linear-gradient(to bottom, #E8E4DD ${progress * 100}%, salmon ${progress * 100}%)`;
+        controls.style.transition = 'background 0.2s ease-out';
+    }
+}, {
+    root: document.querySelector('.main'),
+    threshold: 0.01
+});
+
+const controls = document.querySelector('.controls');
+
+const main = document.getElementById('main') || document.querySelector('main');
+// const updateSidebarGradient = () => {
+//     const loaded = gallery.querySelectorAll('.gallery-item').length;
+//     const total = originalImages.length;
+//     const progress = Math.min(loaded / total, 1);
+//     controls.style.background = `linear-gradient(to bottom, white ${progress * 100}%, salmon ${progress * 100}%)`;
+//     controls.style.transition = 'background 0.4s ease';
+// };
 
 let currentIndex = 0;
 
@@ -90,7 +138,9 @@ const renderGallery = (imageArray) => {
         });
         gallery.appendChild(div);
         observer.observe(div);
+        drainObserver.observe(div);
     });
+    // updateSidebarGradient();
 };
 
 const closeOverlay = () => {
@@ -152,8 +202,46 @@ const normalToggle = document.getElementById("normalToggle");
 let isShuffled = false;
 
 shuffleToggle.addEventListener("click", () => {
+    const topItem = Array.from(gallery.children).find(div =>
+        div.getBoundingClientRect().top >= 0 &&
+        div.getBoundingClientRect().top <= window.innerHeight
+    );
+    const loadedCount = topItem
+        ? Array.prototype.indexOf.call(gallery.children, topItem)
+        : gallery.querySelectorAll('.gallery-item').length;
     isShuffled = true;
-    startShuffledView();
+    const seen = originalImages.slice(0, loadedCount);
+    const unseen = originalImages.slice(loadedCount);
+    const shuffledUnseen = [...unseen].sort(() => Math.random() - 0.5);
+    shuffledImages = [...seen, ...shuffledUnseen];
+    currentImages = [...shuffledImages];
+    currentIndex = loadedCount;
+    gallery.innerHTML = "";
+    const chunk = shuffledImages.slice(0, loadedCount);
+    chunk.forEach(({ id, src }) => {
+        const div = document.createElement("div");
+        div.className = "gallery-item";
+        const image = document.createElement("img");
+        image.src = src;
+        image.dataset.id = id;
+        image.loading = "lazy";
+
+        const idLabel = document.createElement("div");
+        idLabel.className = "photo-id";
+        idLabel.textContent = id;
+
+        div.appendChild(image);
+        div.appendChild(idLabel);
+
+        div.addEventListener("click", () => {
+            const absoluteIndex = currentImages.findIndex(img => img.id === id);
+            openOverlay(absoluteIndex);
+        });
+        gallery.appendChild(div);
+        observer.observe(div);
+        drainObserver.observe(div);
+    });
+    sentinelObserver.observe(loadMoreTrigger);
     triggerGridTransition();
 });
 
@@ -194,9 +282,11 @@ const renderChunk = () => {
         });
         gallery.appendChild(div);
         observer.observe(div);
+        drainObserver.observe(div);
     });
 
     currentIndex += CHUNK_SIZE;
+    // updateSidebarGradient();
 };
 
 const sentinelObserver = new IntersectionObserver((entries) => {
